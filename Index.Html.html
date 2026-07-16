@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Panopticon — AI Exam Proctoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#090D11;
+    --bg2:#0F151B;
+    --card:#10161C;
+    --line: rgba(210,222,232,0.11);
+    --gold:#F2B807;
+    --teal:#33D6C2;
+    --red:#E11D2E;
+    --slate:#7C8A9A;
+    --ink:#E7EDF2;
+    --sub: rgba(231,237,242,0.58);
+    --sans:"Work Sans", "Segoe UI", Arial, sans-serif;
+    --display:"JetBrains Mono", monospace;
+    --mono:"JetBrains Mono", monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{ margin:0; padding:0; }
+  body{
+    min-height:100vh; color:var(--ink); font-family:var(--sans);
+    background:
+      radial-gradient(circle at 12% 8%, rgba(232,171,79,0.06), transparent 38%),
+      radial-gradient(circle at 88% 88%, rgba(62,230,184,0.05), transparent 38%),
+      var(--bg);
+    display:flex; flex-direction:column; align-items:center;
+    padding:0 16px 70px;
+  }
+
+  .siteHeader{ width:100%; position:relative; z-index:5; padding:22px 0; border-bottom:1px solid var(--line); }
+  .siteHeader .wrap{ max-width:900px; margin:0 auto; padding:0 20px; display:flex; align-items:center; justify-content:space-between; }
+  .brandName{ font-family:var(--display); font-size:20px; letter-spacing:0.02em; text-transform:uppercase; color:var(--ink); }
+  .brandName span{ color:var(--red); display:inline-block; animation:blink 1.4s step-end infinite; }
+  .credit{ font-family:var(--mono); font-size:11.5px; color:var(--sub); text-align:right; line-height:1.5; }
+  .credit b{ color:var(--ink); font-weight:600; }
+  @keyframes blink{ 0%,49%{ opacity:1;} 50%,100%{ opacity:0;} }
+
+  /* ============ REDESIGNED HERO — full photo background, no marquee ============ */
+  .heroSection{
+    width:100%; max-width:900px; position:relative; overflow:hidden;
+    border-radius:20px; margin-top:24px; margin-bottom:30px;
+    min-height:440px; display:flex; flex-direction:column; justify-content:flex-end;
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.7);
+  }
+  .heroAperture{
+    position:absolute; inset:0; z-index:0; background:
+      radial-gradient(circle at 74% 42%, #131b22 0%, var(--bg2) 55%, #070a0d 100%);
+  }
+  .heroAperture svg{ position:absolute; top:50%; right:-6%; width:560px; height:560px;
+    transform:translateY(-50%); opacity:0.9; }
+  .apRing{ fill:none; stroke:var(--line); stroke-width:1; }
+  .apRingBright{ fill:none; stroke:rgba(51,214,194,0.35); stroke-width:1; }
+  .apTicks line{ stroke:rgba(210,222,232,0.16); stroke-width:1; }
+  .apSweep{ transform-origin:280px 280px; animation:sweep 5s linear infinite; }
+  .apSweep path{ fill:url(#sweepGrad); }
+  .apCross line{ stroke:rgba(242,184,7,0.55); stroke-width:1; }
+  .apDot{ fill:var(--teal); }
+  @keyframes sweep{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  .heroOverlay{
+    position:absolute; inset:0; z-index:1;
+    background:
+      linear-gradient(100deg, rgba(9,13,17,0.94) 0%, rgba(9,13,17,0.55) 48%, rgba(9,13,17,0.15) 100%),
+      linear-gradient(180deg, rgba(9,13,17,0.05) 0%, rgba(9,13,17,0.7) 88%);
+  }
+  .heroGridOverlay{ position:absolute; inset:0; z-index:1; pointer-events:none; opacity:0.25;
+    background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:46px 46px; mask-image:radial-gradient(ellipse at center, black 0%, transparent 75%); }
+
+  .heroContent{ position:relative; z-index:2; padding:34px 34px 30px; }
+  .readoutPill{ display:inline-flex; align-items:center; gap:9px; font-family:var(--mono);
+    font-size:11.5px; letter-spacing:0.04em; padding:7px 14px; border:1px solid rgba(255,255,255,0.22); border-radius:20px; color:var(--sub);
+    margin-bottom:16px; background:rgba(0,0,0,0.35); backdrop-filter: blur(6px); }
+  .readoutPill .rdot{ width:6px; height:6px; border-radius:50%; background:var(--teal); box-shadow:0 0 10px var(--teal); animation:pulseGlow 1.8s infinite; }
+  @keyframes pulseGlow{ 0%,100%{ box-shadow:0 0 0 0 rgba(62,230,184,0.35);} 50%{ box-shadow:0 0 0 9px rgba(62,230,184,0);} }
+  .readoutPill b{ color:var(--ink); font-weight:600; }
+
+  .heroTitle{ font-family:var(--display); font-weight:700; font-size:clamp(26px,4.6vw,38px); color:var(--ink);
+    text-transform:uppercase; text-shadow:0 3px 18px rgba(0,0,0,0.6); line-height:1.18; letter-spacing:-0.01em; margin:0; }
+  .heroTitle .accent{ color:var(--gold); }
+  .heroSub{ margin-top:14px; color:#c9d2da; font-family:var(--sans); font-size:14px; font-weight:300; max-width:50ch; line-height:1.65; }
+
+  /* 3D signature deck — replaces the old marquee entirely */
+  .deckWrap{ perspective:1300px; display:flex; justify-content:flex-start; gap:14px; margin-top:26px; flex-wrap:wrap; }
+  .deckCard{
+    width:150px; background:rgba(255,255,255,0.07); backdrop-filter: blur(10px);
+    border:1px solid rgba(255,255,255,0.16); border-radius:14px; padding:14px 15px;
+    transform-style:preserve-3d; transition:transform .35s ease, box-shadow .35s ease;
+    box-shadow: 0 22px 40px -18px rgba(0,0,0,0.65);
+  }
+  .deckCard:nth-child(1){ transform:rotateY(10deg) rotateX(3deg) translateY(6px); }
+  .deckCard:nth-child(2){ transform:rotateY(0deg) rotateX(1deg) translateY(-6px); }
+  .deckCard:nth-child(3){ transform:rotateY(-10deg) rotateX(3deg) translateY(6px); }
+  .deckCard:hover{ transform:rotateY(0) rotateX(0) translateY(-10px) scale(1.05); box-shadow:0 28px 50px -14px rgba(0,0,0,0.75); }
+  .deckCard .dLabel{ font-family:var(--mono); font-size:9.5px; letter-spacing:1.2px; color:var(--sub); text-transform:uppercase; }
+  .deckCard .dValue{ font-family:var(--display); font-size:22px; color:var(--ink); margin-top:3px; }
+  .deckCard .dSub{ font-size:10.5px; color:var(--sub); margin-top:3px; line-height:1.4; }
+  .deckCard.gold .dValue{ color:var(--gold); }
+  .deckCard.teal .dValue{ color:var(--teal); }
+  .deckCard.slate .dValue{ color:var(--slate); }
+
+  /* ============ STAGE (webcam) ============ */
+  .stage{
+    position:relative; width:min(820px,94vw); border-radius:14px;
+    overflow:hidden; background:#000; border:1px solid var(--line);
+    box-shadow:0 24px 60px rgba(0,0,0,0.55);
+    transform-style: preserve-3d; transition: transform .3s ease;
+  }
+  video{ width:100%; aspect-ratio: 4 / 3; display:block; transform:scaleX(-1); object-fit:cover; }
+
+  .banner{
+    position:absolute; top:0; left:0; right:0; padding:14px 18px;
+    font-family:var(--display); font-weight:600; font-size:14px; letter-spacing:0.4px;
+    background:linear-gradient(180deg, rgba(6,7,9,0.88), rgba(6,7,9,0.25));
+    display:flex; align-items:center; gap:8px; z-index:5;
+  }
+  .banner.safe{ color:var(--teal); }
+  .banner.alert{ color:var(--red); animation:pulseBanner .8s infinite; }
+  .banner.warnAmber{ color:var(--gold); animation:pulseBanner .8s infinite; }
+  .banner.hazard{ color:var(--red); animation:pulseBanner .35s infinite; }
+  @keyframes pulseBanner{ 50%{ background:linear-gradient(180deg, rgba(70,0,10,0.55), rgba(6,7,9,0.3)); } }
+
+  .strikes{ position:absolute; top:16px; right:16px; display:flex; gap:7px; z-index:6; }
+  .strikeDot{
+    width:13px; height:13px; border-radius:3px; border:1.5px solid #454b57;
+    background:transparent; transition:all .25s;
+  }
+  .strikeDot.used{ background:var(--red); border-color:var(--red); box-shadow:0 0 8px rgba(255,77,94,0.6); }
+
+  .tabBadge{
+    position:absolute; top:16px; left:16px; z-index:6;
+    background:rgba(6,7,9,0.7); border:1px solid var(--line); border-radius:8px;
+    padding:5px 10px; font-size:11.5px; color:var(--sub); font-family:var(--display);
+  }
+  .tabBadge b{ color:var(--gold); }
+
+  .startOverlay, .warnOverlay, .lockoutOverlay, .blackoutOverlay{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px; z-index:10;
+  }
+  .startOverlay{ background:linear-gradient(180deg, #14171d, #0b0d10); gap:22px; }
+  .startOverlay p{ color:var(--sub); font-size:13px; max-width:400px; margin:0; }
+  .startOverlay .loginLabel{ margin-bottom:-8px; }
+  .nameInput{
+    padding:14px 18px; width:280px; text-align:center; border-radius:8px;
+    border:1.5px solid #454b57; background:#0e1116; color:var(--ink);
+    font-family:var(--sans); font-size:15px;
+  }
+  .nameInput:focus{ outline:none; border-color:var(--gold); }
+  .studentTag{
+    position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:6;
+    background:rgba(6,7,9,0.75); border:1px solid var(--line); border-radius:8px;
+    padding:5px 14px; font-family:var(--display); font-size:12.5px; color:var(--ink); letter-spacing:0.3px;
+  }
+
+  .warnOverlay{ background:rgba(8,8,10,0.95); }
+  .warnOverlay .icon{ font-size:44px; }
+  .warnOverlay h2{
+    font-family:var(--display); color:var(--gold); font-size:22px; margin:0; letter-spacing:0.5px;
+  }
+  .warnOverlay p{ color:#f0ead9; font-size:14px; max-width:420px; margin:0; }
+  .warnOverlay .strikeText{ color:var(--red); font-weight:700; font-size:13px; font-family:var(--display); letter-spacing:0.5px; }
+
+  .lockoutOverlay{ background:linear-gradient(180deg, #240007, #0b0d10); z-index:11; }
+  .lockoutOverlay.complete{ background:linear-gradient(180deg, #06251d, #0b0d10); }
+  .lockoutOverlay.complete h2{ color:var(--teal); }
+  .lockoutOverlay.complete p{ color:#bdf5ec; }
+  .lockoutOverlay .icon{ font-size:52px; }
+  .lockoutOverlay h2{
+    font-family:var(--display); color:var(--red); font-size:26px; margin:0; letter-spacing:0.5px;
+  }
+  .lockoutOverlay p{ color:#ffd0d6; font-size:13.5px; max-width:440px; margin:0; }
+
+  .blackoutOverlay{ background:#000; z-index:12; }
+  .blackoutOverlay h2{ font-family:var(--display); color:var(--red); font-size:24px; letter-spacing:1px; animation:pulseBanner .5s infinite; }
+
+  button{
+    background:linear-gradient(90deg, var(--gold), #c9862f);
+    color:#0b0d10; border:none; padding:12px 26px;
+    font-size:14px; font-weight:700; border-radius:8px; cursor:pointer;
+    font-family:var(--display); letter-spacing:0.3px;
+  }
+  button:hover{ filter:brightness(1.08); }
+  button.secondary{ background:transparent; border:1.5px solid #454b57; color:var(--ink); }
+
+  .panel{
+    width:min(820px,94vw); margin-top:22px;
+    background:linear-gradient(180deg, #131a21 0%, var(--card) 100%);
+    border:1px solid var(--line); border-top-color:rgba(210,222,232,0.2);
+    border-radius:14px; padding:20px 22px;
+    box-shadow:
+      0 1px 0 rgba(210,222,232,0.06) inset,
+      0 -18px 30px -22px rgba(0,0,0,0.6) inset,
+      0 24px 40px -22px rgba(0,0,0,0.65);
+    transform-style:preserve-3d; transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .panel:hover{
+    transform:translateY(-3px) rotateX(1deg);
+    box-shadow:
+      0 1px 0 rgba(210,222,232,0.08) inset,
+      0 -18px 30px -22px rgba(0,0,0,0.6) inset,
+      0 30px 50px -20px rgba(0,0,0,0.7);
+  }
+  .panelTitle{
+    font-family:var(--display); font-size:11.5px; text-transform:uppercase; letter-spacing:1.8px;
+    color:var(--gold); margin-bottom:12px; font-weight:600;
+  }
+  .row{ display:flex; justify-content:space-between; align-items:center;
+        padding:10px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .row:last-child{ border-bottom:none; }
+  .row .label{ color:var(--sub); display:flex; align-items:center; gap:9px; }
+  .row .label::before{
+    content:''; width:7px; height:7px; border-radius:2px; flex:none;
+    background:var(--teal); box-shadow:0 0 6px rgba(51,214,194,0.6), 0 1px 0 rgba(0,0,0,0.4) inset;
+  }
+  .row .value{ font-weight:700; color:var(--ink); font-family:var(--display); }
+  .bar{ width:130px; height:6px; background:#20242b; border-radius:4px; overflow:hidden; margin-left:10px;
+        box-shadow:0 1px 2px rgba(0,0,0,0.5) inset; }
+  .bar > div{ height:100%; background:linear-gradient(90deg, var(--teal), var(--gold)); width:0%; transition:width .15s linear; }
+  .waveWrap{ display:flex; align-items:center; gap:2px; height:18px; margin-left:10px; }
+  .waveBar{ width:3px; background:linear-gradient(180deg, var(--teal), var(--gold)); border-radius:2px; height:3px; transition:height .08s; }
+
+  .chip{ font-family:var(--mono); font-size:10.5px; font-weight:700; padding:3px 10px; border-radius:4px;
+         box-shadow:0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 5px rgba(0,0,0,0.4); }
+  .chip.amberChip{ background:linear-gradient(180deg, rgba(242,184,7,0.2), rgba(242,184,7,0.08)); color:var(--gold); border:1px solid rgba(242,184,7,0.4); }
+  .chip.redChip{ background:linear-gradient(180deg, rgba(225,29,46,0.2), rgba(225,29,46,0.08)); color:#ff6b78; border:1px solid rgba(225,29,46,0.4); }
+  .chip.tealChip{ background:linear-gradient(180deg, rgba(51,214,194,0.18), rgba(51,214,194,0.07)); color:var(--teal); border:1px solid rgba(51,214,194,0.4); }
+
+  .footnote{
+    width:min(820px,94vw); color:#565d6b; font-size:11.5px; margin-top:16px; line-height:1.6;
+  }
+  .footnote b{ color:var(--sub); }
+
+  /* ============ ALLOWED / FLAGGED — embossed split console ============ */
+  .dodontWrap{ width:min(820px,94vw); display:flex; gap:3px; margin-top:22px; flex-wrap:wrap;
+    perspective:1400px; }
+  .dodontCol{ flex:1; min-width:260px; padding:20px 22px;
+    background:linear-gradient(180deg, #131a21 0%, var(--card) 100%);
+    border:1px solid var(--line); transform-style:preserve-3d;
+    transition:transform .25s ease, box-shadow .25s ease;
+    box-shadow:0 1px 0 rgba(210,222,232,0.06) inset, 0 20px 36px -22px rgba(0,0,0,0.65);
+  }
+  .dodontCol.doCol{ border-radius:14px 4px 4px 14px; border-right-color:transparent; }
+  .dodontCol.dontCol{ border-radius:4px 14px 14px 4px; }
+  .dodontCol.doCol:hover{ transform:rotateY(2deg) translateY(-3px); }
+  .dodontCol.dontCol:hover{ transform:rotateY(-2deg) translateY(-3px); }
+  .dodontCol h4{ font-family:var(--display); font-size:11.5px; letter-spacing:1.6px; margin:0 0 12px;
+    text-transform:uppercase; font-weight:700; }
+  .doCol h4{ color:var(--teal); }
+  .dontCol h4{ color:var(--red); }
+  .dodontCol ul{ margin:0; padding-left:0; list-style:none; }
+  .dodontCol li{ font-size:12.6px; color:var(--sub); margin-bottom:9px; line-height:1.55;
+    padding-left:16px; position:relative; }
+  .dodontCol li::before{ content:'—'; position:absolute; left:0; color:var(--slate); }
+  .dodontCol li b{ color:var(--ink); }
+
+  .footerCredit{ width:min(820px,94vw); margin-top:36px; color:var(--sub); font-size:12px; text-align:center; font-family:var(--mono); }
+  .footerCredit b{ color:var(--gold); }
+
+  @media (max-width: 600px){
+    .heroSection{ min-height:auto; }
+    .deckWrap{ justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="siteHeader">
+    <div class="wrap">
+      <div class="brandName">Panopticon<span>.</span></div>
+      <div class="credit">Designed &amp; Engineered by<br><b>Harshita Nayan</b></div>
+    </div>
+  </header>
+
+  <section class="heroSection" id="heroSection">
+    <div class="heroAperture">
+      <svg viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="sweepGrad" cx="0" cy="0" r="1">
+            <stop offset="0%" stop-color="#33D6C2" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#33D6C2" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <g class="apTicks">
+          <line x1="280" y1="20" x2="280" y2="46"/>
+          <line x1="280" y1="514" x2="280" y2="540"/>
+          <line x1="20" y1="280" x2="46" y2="280"/>
+          <line x1="514" y1="280" x2="540" y2="280"/>
+        </g>
+        <circle class="apRing" cx="280" cy="280" r="240"/>
+        <circle class="apRingBright" cx="280" cy="280" r="190"/>
+        <circle class="apRing" cx="280" cy="280" r="140"/>
+        <circle class="apRing" cx="280" cy="280" r="90"/>
+        <g class="apSweep">
+          <path d="M280,280 L280,40 A240,240 0 0,1 405,88 Z"/>
+        </g>
+        <g class="apCross">
+          <line x1="180" y1="280" x2="380" y2="280"/>
+          <line x1="280" y1="180" x2="280" y2="380"/>
+        </g>
+        <circle class="apDot" cx="280" cy="280" r="4"/>
+      </svg>
+    </div>
+    <div class="heroOverlay"></div>
+    <div class="heroGridOverlay"></div>
+    <div class="heroContent">
+      <div class="readoutPill"><span class="rdot"></span> <b>SECURITY LAYER</b> — Rev. 2 · 3 new detection systems live</div>
+      <h1 class="heroTitle">Nothing gets<br><span class="accent">past the lens.</span></h1>
+      <p class="heroSub">Live browser-based exam proctoring with gaze-timing, ghost-writer input analysis, and forbidden-electronics scanning — running entirely in this tab, nothing recorded or uploaded.</p>
+
+      <div class="deckWrap">
+        <div class="deckCard gold">
+          <div class="dLabel">Scratchpad</div>
+          <div class="dValue">12s</div>
+          <div class="dSub">Grace buffer before a gaze strike</div>
+        </div>
+        <div class="deckCard teal">
+          <div class="dLabel">Ghost-writer</div>
+          <div class="dValue">4s</div>
+          <div class="dSub">Stillness lock window</div>
+        </div>
+        <div class="deckCard slate">
+          <div class="dLabel">Electronics</div>
+          <div class="dValue">3s</div>
+          <div class="dSub">Blackout · zero tolerance</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stage" id="stage3d">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="banner safe" id="banner">STATUS: SAFE (p=0.00)</div>
+    <div class="tabBadge">Tab switches: <b id="tabBadgeVal">0</b>/3</div>
+    <button id="endSessionBtn" class="secondary" style="display:none; position:absolute; top:40px; right:16px; z-index:6; padding:6px 12px; font-size:11.5px;">End Session</button>
+    <div class="strikes" id="strikes">
+      <div class="strikeDot" id="dot1"></div>
+      <div class="strikeDot" id="dot2"></div>
+      <div class="strikeDot" id="dot3"></div>
+    </div>
+    <canvas id="burstCanvas" style="position:absolute; inset:0; pointer-events:none; z-index:7;"></canvas>
+
+    <div class="studentTag" id="studentTag" style="display:none;"></div>
+
+    <div class="startOverlay" id="startOverlay">
+      <p class="loginLabel" style="font-family:var(--display); color:var(--sub); font-size:12.5px; letter-spacing:0.5px;">STUDENT LOGIN</p>
+      <input id="studentNameInput" type="text" placeholder="Enter your name" autocomplete="off" class="nameInput">
+      <button id="startBtn">Login &amp; Begin Proctored Session</button>
+      <p>This asks your browser for camera and microphone permission. Nothing is recorded or sent
+      anywhere — everything runs live in this tab. After starting, stay still for 2 seconds while
+      the system calibrates your baseline head position. The electronics scanner loads a small
+      vision model the first time you start.</p>
+    </div>
+
+    <div class="warnOverlay" id="warnOverlay" style="display:none;">
+      <div class="icon">⚠️</div>
+      <h2 id="warnTitle">WARNING</h2>
+      <p id="warnText">Suspicious behavior detected.</p>
+      <p class="strikeText" id="warnStrikeText">STRIKE 1 OF 3</p>
+    </div>
+
+    <div class="blackoutOverlay" id="blackoutOverlay" style="display:none;">
+      <h2>⚡ ELECTRONIC ITEM DETECTION</h2>
+    </div>
+
+    <div class="lockoutOverlay" id="lockoutOverlay" style="display:none;">
+      <div class="icon" id="lockoutIcon">⛔</div>
+      <h2 id="lockoutTitle">EXAM TERMINATED</h2>
+      <p id="lockoutText">You have received 3 strikes for suspicious behavior. Your session has
+      been ended and flagged for review.</p>
+      <button class="secondary" id="restartBtn">Restart Demo</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panelTitle">Live Signal Monitor</div>
+    <div class="row"><span class="label">Head position deviation</span>
+      <span class="value" id="gazeVal">—</span></div>
+    <div class="row"><span class="label">Gaze direction</span>
+      <span class="value" id="gazeDirVal">center</span></div>
+    <div class="row"><span class="label">Audio level (dB, live)</span>
+      <span class="value" id="audioVal">—</span>
+      <div class="waveWrap" id="waveWrap">
+        <div class="waveBar"></div><div class="waveBar"></div><div class="waveBar"></div>
+        <div class="waveBar"></div><div class="waveBar"></div><div class="waveBar"></div>
+        <div class="waveBar"></div><div class="waveBar"></div>
+      </div>
+    </div>
+    <div class="row"><span class="label">Faces detected</span>
+      <span class="value" id="faceCountVal">0</span></div>
+    <div class="row"><span class="label">Talking detected</span>
+      <span class="value" id="talkVal">No</span></div>
+    <div class="row"><span class="label">Model confidence</span>
+      <span class="value" id="confVal">0%</span>
+      <div class="bar"><div id="confBar"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panelTitle">Violation Ledger — 7 Rule Categories</div>
+    <div class="row"><span class="label">Rule 1 · Scratchpad / gaze (L·R·U·down&gt;12s)</span>
+      <span class="value"><span class="chip amberChip" id="ledgerGaze">0 / 2</span></span></div>
+    <div class="row"><span class="label">Rule 2 · Proxy / ghost-writer</span>
+      <span class="value"><span class="chip amberChip" id="ledgerGhost">0 / 2</span></span></div>
+    <div class="row"><span class="label">Rule 3 · Forbidden electronics</span>
+      <span class="value"><span class="chip redChip" id="ledgerElec">0 / 0 (zero-tolerance)</span></span></div>
+    <div class="row"><span class="label">Multiple faces in frame</span>
+      <span class="value"><span class="chip amberChip" id="ledgerFace">0 / 3</span></span></div>
+    <div class="row"><span class="label">Tab switches</span>
+      <span class="value"><span class="chip amberChip" id="ledgerTab">0 / 3</span></span></div>
+    <div class="row"><span class="label">Talking / audible speech</span>
+      <span class="value"><span class="chip amberChip" id="ledgerTalk">0 / 2</span></span></div>
+  </div>
+
+  <div class="footnote">
+    <b>How it works:</b> after starting, the system calibrates to your natural resting head
+    position for 2 seconds. Looking down beyond 12 continuous seconds, or left/right/up at all,
+    counts toward the Rule 1 gaze ledger — 2 warnings, then termination on the 3rd. Every 4
+    seconds, keyboard/click activity is cross-checked against how still your body is; sustained
+    input with no matching motion is flagged as a possible ghost-writer, 2 warnings then a locked
+    termination on the 3rd. A lightweight vision model watches for phones in frame — any hit is a
+    3-second blackout and instant termination, zero tolerance. Multiple faces allow 3 warnings
+    before ending on the 4th; tab switches (including minimizing the window) allow 3 warnings
+    before ending the session on the 4th.
+  </div>
+
+  <div class="dodontWrap">
+    <div class="dodontCol doCol">
+      <h4>[ PERMITTED ]</h4>
+      <ul>
+        <li>Keep your <b>face centered</b> and visible in the frame at all times.</li>
+        <li>Glance down briefly for scratchpad work, then return your eyes to the screen.</li>
+        <li>Keep both hands visible near the keyboard.</li>
+        <li>Sit in a well-lit room, facing the camera directly.</li>
+        <li>Keep this tab active and in focus for the whole session.</li>
+        <li>Type at your own natural pace.</li>
+      </ul>
+    </div>
+    <div class="dodontCol dontCol">
+      <h4>[ FLAGGED ]</h4>
+      <ul>
+        <li>Don't look down for more than <b>12 seconds</b> at a stretch.</li>
+        <li>Don't glance left, right, or upward toward notes or a second screen.</li>
+        <li>Don't keep any phone, calculator, or tablet in the camera's view.</li>
+        <li>Don't switch tabs, minimize the window, or open other apps.</li>
+        <li>Don't let anyone else type or click on your behalf.</li>
+        <li>Don't allow a second face to appear in frame, even briefly.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footerCredit">PROJECT PANOPTICON — Advanced Security Architecture, Rev. 2 · Designed &amp; Built by <b>Harshita Nayan</b></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script type="module">
+import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const video = document.getElementById('video');
+const banner = document.getElementById('banner');
+const startOverlay = document.getElementById('startOverlay');
+const startBtn = document.getElementById('startBtn');
+const studentNameInput = document.getElementById('studentNameInput');
+const studentTag = document.getElementById('studentTag');
+const warnOverlay = document.getElementById('warnOverlay');
+const warnTitle = document.getElementById('warnTitle');
+const warnText = document.getElementById('warnText');
+const warnStrikeText = document.getElementById('warnStrikeText');
+const blackoutOverlay = document.getElementById('blackoutOverlay');
+const lockoutOverlay = document.getElementById('lockoutOverlay');
+const lockoutTitle = document.getElementById('lockoutTitle');
+const lockoutText = document.getElementById('lockoutText');
+const lockoutIcon = document.getElementById('lockoutIcon');
+const restartBtn = document.getElementById('restartBtn');
+const endSessionBtn = document.getElementById('endSessionBtn');
+const dots = [document.getElementById('dot1'), document.getElementById('dot2'), document.getElementById('dot3')];
+const stage3d = document.getElementById('stage3d');
+const tabBadgeVal = document.getElementById('tabBadgeVal');
+
+const gazeVal = document.getElementById('gazeVal');
+const gazeDirVal = document.getElementById('gazeDirVal');
+const audioVal = document.getElementById('audioVal');
+const faceCountVal = document.getElementById('faceCountVal');
+const talkVal = document.getElementById('talkVal');
+const confVal = document.getElementById('confVal');
+const confBar = document.getElementById('confBar');
+const waveBars = document.querySelectorAll('#waveWrap .waveBar');
+
+const ledgerGaze = document.getElementById('ledgerGaze');
+const ledgerGhost = document.getElementById('ledgerGhost');
+const ledgerTalk = document.getElementById('ledgerTalk');
+const ledgerElec = document.getElementById('ledgerElec');
+const ledgerFace = document.getElementById('ledgerFace');
+const ledgerTab = document.getElementById('ledgerTab');
+
+const burstCanvas = document.getElementById('burstCanvas');
+const burstCtx = burstCanvas.getContext('2d');
+let particles = [];
+function resizeBurstCanvas(){ burstCanvas.width = stage3d.clientWidth; burstCanvas.height = stage3d.clientHeight; }
+window.addEventListener('resize', resizeBurstCanvas);
+setTimeout(resizeBurstCanvas, 300);
+function spawnBurst(color1, color2){
+  resizeBurstCanvas();
+  const cx = burstCanvas.width/2, cy = burstCanvas.height/2;
+  for(let i=0;i<24;i++){
+    const angle = (Math.PI*2*i)/24 + Math.random()*0.3;
+    const speed = 3 + Math.random()*4;
+    particles.push({ x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed,
+      life:1, color: Math.random()>0.5 ? color1 : color2 });
+  }
+}
+function animateParticles(){
+  burstCtx.clearRect(0,0,burstCanvas.width,burstCanvas.height);
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 0.02;
+    burstCtx.globalAlpha = Math.max(0,p.life);
+    burstCtx.fillStyle = p.color;
+    burstCtx.beginPath(); burstCtx.arc(p.x, p.y, 3.2, 0, Math.PI*2); burstCtx.fill();
+  });
+  burstCtx.globalAlpha = 1;
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* subtle 3D tilt on the stage, mouse-driven — part of the "eye-catching 3D" signature */
+stage3d.addEventListener('mousemove', (e) => {
+  const r = stage3d.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width - 0.5;
+  const py = (e.clientY - r.top) / r.height - 0.5;
+  stage3d.style.transform = `rotateY(${px*2.5}deg) rotateX(${-py*2.5}deg)`;
+});
+stage3d.addEventListener('mouseleave', () => { stage3d.style.transform = 'rotateY(0) rotateX(0)'; });
+
+/* ============================================================
+   SHARED VIOLATION LEDGER — one entry per rule category
+============================================================ */
+const ledger = {
+  gaze:        { count:0, cap:2, el: ledgerGaze },
+  ghostwriter: { count:0, cap:2, el: ledgerGhost },
+  electronics: { count:0, cap:0, el: ledgerElec },
+  multiFace:   { count:0, cap:3, el: ledgerFace },
+  tabSwitch:   { count:0, cap:3, el: ledgerTab },
+  talking:     { count:0, cap:2, el: ledgerTalk },
+};
+function updateLedgerUI(key){
+  const L = ledger[key];
+  if(key === 'electronics'){ L.el.textContent = `${L.count} / 0 (zero-tolerance)`; return; }
+  L.el.textContent = `${L.count} / ${L.cap}`;
+  L.el.className = 'chip ' + (L.count === 0 ? 'tealChip' : (L.count > L.cap ? 'redChip' : 'amberChip'));
+}
+
+let gazeBuffer = [];
+let audioBuffer = [];
+let mouthBuffer = [];
+let currentDeviation = 0;
+let faceCurrentlyDetected = true;
+let currentFaceCount = 0;
+let isTalking = false;
+const WINDOW_MS = 10000;
+const MOUTH_WINDOW_MS = 1200;
+
+let baselineX = null, baselineY = null;
+let calibrationSamples = [];
+const CALIBRATION_MS = 2000;
+let calibrationStart = null;
+let calibrated = false;
+
+let sessionLocked = false;
+let studentName = '';
+let sessionStartTime = 0;
+let lastVideoTime = -1;
+let lastFrameTime = Date.now();
+
+/* ---- Rule 1: Scratchpad / gaze direction ---- */
+let downGazeMs = 0;
+let lastGazeDirection = 'center';
+let lastMouthOpenness = 0;
+let lastGazeViolationAt = 0;
+const GAZE_COOLDOWN_MS = 1500;
+const DOWN_GRACE_MS = 12000;
+const DOWN_THRESH = 0.045;
+const UP_THRESH = -0.045;
+const SIDE_THRESH = 0.055;
+
+/* ---- Rule 2: Ghost-writer ---- */
+let inputEvents = [];
+window.addEventListener('keydown', () => inputEvents.push(Date.now()));
+window.addEventListener('click', () => inputEvents.push(Date.now()));
+function getInputRate(windowMs){
+  const cutoff = Date.now() - windowMs;
+  inputEvents = inputEvents.filter(t => t >= cutoff);
+  return inputEvents.length;
+}
+
+/* ---- Rule 3: Forbidden electronics (runs inside a Web Worker — see Feature 2) ---- */
+let electronicsWorker = null;
+let electronicsWorkerReady = false;
+let electronicsTerminated = false;
+const FORBIDDEN_LABELS = ['cell phone']; // COCO-SSD's closest reliable class; calculator/tablet
+                                          // would need a custom-trained classifier in production
+
+/* ---- Multi-face ---- */
+let wasMultiFaceAlert = false;
+
+/* ---- Talking ---- */
+let wasTalkingAlert = false;
+let talkTrueSince = null;
+const TALK_CONFIRM_MS = 700; // mouth+audio must both stay elevated this long before it counts as real talking
+let MOUTH_OPEN_THRESH = 0.12; // mouth-gap ÷ eye-distance ratio above which lips count as "open" — tune this using the live ratio shown next to "Talking" on screen
+
+/* ---- Tab switching + window minimize ---- */
+let tabSwitchTotal = 0;
+const TAB_SWITCH_LIMIT = 3;
+
+let audioCtx, analyser, dataArray;
+let mediaStream;
+let faceLandmarker;
+
+function playBeep(freq, duration, type='sine'){
+  if(!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+function playTabSwitchSound(){ playBeep(700, 0.15, 'square'); }
+function playWarningSound(){
+  playBeep(760, 0.16, 'square');
+  setTimeout(()=>playBeep(760, 0.16, 'square'), 190);
+}
+function playLockoutSound(){
+  playBeep(220, 0.4, 'sawtooth');
+  setTimeout(()=>playBeep(160, 0.6, 'sawtooth'), 350);
+}
+function playElectronicsSound(){
+  playBeep(300, 0.12, 'square');
+  setTimeout(()=>playBeep(900, 0.18, 'square'), 130);
+}
+
+function pushWithWindow(arr, value, now){
+  arr.push({t: now, v: value});
+  while(arr.length && now - arr[0].t > WINDOW_MS) arr.shift();
+}
+
+/* ---------- generic violation + warning + lockout plumbing ---------- */
+function showWarning(reason, title, count, cap){
+  playWarningSound();
+  warnTitle.textContent = title || "WARNING";
+  warnText.textContent = reason;
+  warnStrikeText.textContent = `STRIKE ${count} OF ${cap + 1}`;
+  warnOverlay.style.display = "flex";
+  const dismiss = () => { warnOverlay.style.display = "none"; };
+  if(document.hidden){
+    // Tab is minimized/hidden right now — don't burn the 2.4s countdown while
+    // the student can't see it. Wait until they come back, then show it.
+    const onVisible = () => {
+      if(!document.hidden){
+        document.removeEventListener('visibilitychange', onVisible);
+        setTimeout(dismiss, 2400);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+  } else {
+    setTimeout(dismiss, 2400);
+  }
+}
+
+/* Builds a one-page PDF summary of the session: student, duration, and every violation count */
+function generateSessionReport(status){
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const minutes = ((Date.now() - (sessionStartTime || Date.now())) / 60000).toFixed(1);
+    doc.setFontSize(16); doc.text('Panopticon Exam Session Report', 14, 18);
+    doc.setFontSize(11);
+    doc.text(`Student: ${studentName || 'Unknown'}`, 14, 32);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 40);
+    doc.text(`Duration: ${minutes} min`, 14, 48);
+    doc.text(`Status: ${status}`, 14, 56);
+    doc.text('Violation summary:', 14, 68);
+    let y = 76;
+    Object.keys(ledger).forEach(k => {
+      const cap = k === 'electronics' ? '0 (zero-tolerance)' : ledger[k].cap;
+      doc.text(`- ${k}: ${ledger[k].count} / ${cap}`, 18, y);
+      y += 8;
+    });
+    doc.text(`- tabSwitch: ${tabSwitchTotal} / ${TAB_SWITCH_LIMIT}`, 18, y);
+    doc.save(`${(studentName || 'session').trim().replace(/\s+/g,'_')}_report.pdf`);
+  }catch(e){ console.warn('[panopticon] failed to generate PDF report', e); }
+}
+
+function triggerLockout(title, text, complete){
+  sessionLocked = true;
+  generateSessionReport(title);
+  endSessionBtn.style.display = "none";
+  playLockoutSound();
+  warnOverlay.style.display = "none";
+  blackoutOverlay.style.display = "none";
+  lockoutOverlay.classList.toggle('complete', !!complete);
+  lockoutIcon.textContent = complete ? '✅' : '⛔';
+  lockoutTitle.textContent = title;
+  lockoutText.textContent = text;
+  lockoutOverlay.style.display = "flex";
+  if(mediaStream){ mediaStream.getTracks().forEach(t => t.stop()); }
+}
+
+/* Lets a student end the exam voluntarily instead of only via a violation */
+function endSessionNormally(){
+  if(sessionLocked) return;
+  triggerLockout("SESSION COMPLETE",
+    `Thanks, ${studentName || 'student'} — your session has ended and a PDF report has been downloaded.`,
+    true);
+}
+endSessionBtn.addEventListener('click', () => {
+  if(confirm('End your session now? This stops monitoring and downloads your report.')) endSessionNormally();
+});
+
+/* category-based violation reporter used by rules 1, 2, multi-face, tab-switch, minimize */
+function violate(key, {warnMsg, warnTitleTxt, termTitle, termMsg, color1, color2}){
+  if(sessionLocked) return;
+  const L = ledger[key];
+  L.count++;
+  updateLedgerUI(key);
+  spawnBurst(color1 || '#ff4d5e', color2 || '#e8ab4f');
+  if(L.count > L.cap){
+    triggerLockout(termTitle, termMsg);
+  } else {
+    showWarning(warnMsg, warnTitleTxt, L.count, L.cap);
+  }
+}
+
+/* electronics is zero-tolerance: separate path with 3s blackout, no warning ladder */
+function electronicsViolation(label, score){
+  if(sessionLocked || electronicsTerminated) return;
+  electronicsTerminated = true;
+  ledger.electronics.count = 1;
+  updateLedgerUI('electronics');
+  playElectronicsSound();
+  console.log('[incident]', { type:'electronics', label, score, t: new Date().toISOString() });
+  blackoutOverlay.style.display = 'flex';
+  setTimeout(() => {
+    triggerLockout("ELECTRONIC ITEM DETECTED",
+      `A forbidden electronic device (${label}) was detected in frame. Zero-tolerance policy — session terminated on first offense.`);
+  }, 3000);
+}
+
+/* ---------- Rule: tab switch (also covers window minimize — same category) ---------- */
+function handleTabSwitch(){
+  tabSwitchTotal++;
+  tabBadgeVal.textContent = tabSwitchTotal;
+  playTabSwitchSound();
+  violate('tabSwitch', {
+    warnMsg: "You have switched a lot of tabs.",
+    warnTitleTxt: "TAB SWITCH DETECTED",
+    termTitle: "TOO MANY TAB SWITCHES",
+    termMsg: `You switched tabs or windows ${tabSwitchTotal} times, exceeding the allowed limit of ${TAB_SWITCH_LIMIT}. Your exam session has been terminated.`,
+    color1:'#F2B807', color2:'#c9862f'
+  });
+}
+
+/* A minimized window also counts as a tab switch — same ledger, same limit. */
+document.addEventListener('visibilitychange', () => {
+  if(sessionLocked) return;
+  if(document.hidden) handleTabSwitch();
+});
+
+restartBtn.addEventListener('click', () => { location.reload(); });
+
+/* ---------- setup ---------- */
+async function setup(){
+  const filesetResolver = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+  faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO",
+    numFaces: 3
+  });
+
+  mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  video.srcObject = mediaStream;
+  await video.play();
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaStreamSource(mediaStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 512;
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+  source.connect(analyser);
+
+  calibrationStart = Date.now();
+
+  // Feature 2: the electronics classifier now loads and runs entirely inside a Web
+  // Worker, off the main thread, so it can never stutter the webcam feed or timers.
+  initElectronicsWorker();
+
+  // Rule 2 ghost-writer tick — every 4 seconds
+  setInterval(ghostwriterTick, 4000);
+
+  requestAnimationFrame(loop);
+}
+
+/* Feature 2: coco-ssd runs inside this worker so the heavy tensor math never touches
+   the main thread — the webcam feed and gaze/talking timers stay smooth. */
+const ELECTRONICS_WORKER_SRC = `
+  importScripts('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+  importScripts('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+  let model = null, canvas = null, ctx = null, errStreak = 0;
+  async function loadModel(){
+    try{ await tf.setBackend('webgl'); } catch(e){ await tf.setBackend('cpu'); }
+    model = await cocoSsd.load();
+    postMessage({type:'ready', backend: tf.getBackend()});
+  }
+  loadModel().catch(err => postMessage({type:'error', message: String(err)}));
+  onmessage = async (e) => {
+    if(e.data.type !== 'frame' || !model){ if(e.data.bitmap) e.data.bitmap.close(); return; }
+    const bitmap = e.data.bitmap;
+    try{
+      if(!canvas){ canvas = new OffscreenCanvas(bitmap.width, bitmap.height); ctx = canvas.getContext('2d'); }
+      ctx.drawImage(bitmap, 0, 0);
+      const imgData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+      const preds = await model.detect(imgData);
+      errStreak = 0;
+      const hit = preds.find(p => ${JSON.stringify(FORBIDDEN_LABELS)}.includes(p.class) && p.score >= 0.55);
+      postMessage({type:'result', hit: hit ? {class: hit.class, score: hit.score} : null});
+    }catch(err){
+      errStreak++;
+      postMessage({type:'result', hit: null, error: String(err)});
+      // A few backends silently fail per-frame instead of throwing at setup — if this
+      // keeps happening, force the safe CPU backend rather than staying broken forever.
+      if(errStreak === 3){ try{ await tf.setBackend('cpu'); }catch(e){} }
+    }finally{
+      bitmap.close();
+    }
+  };
+`;
+
+function initElectronicsWorker(){
+  try{
+    const blob = new Blob([ELECTRONICS_WORKER_SRC], {type: 'application/javascript'});
+    electronicsWorker = new Worker(URL.createObjectURL(blob));
+    electronicsWorker.onmessage = (e) => {
+      if(e.data.type === 'ready'){
+        console.log('[panopticon] electronics scanner running on backend:', e.data.backend);
+        electronicsWorkerReady = true;
+        scanForElectronics();
+      } else if(e.data.type === 'result'){
+        if(e.data.error) console.warn('[panopticon] detection error on this frame:', e.data.error);
+        if(e.data.hit){ electronicsViolation(e.data.hit.class, e.data.hit.score); }
+        else { setTimeout(scanForElectronics, 250); }
+      } else if(e.data.type === 'error'){
+        console.warn('[panopticon] electronics worker failed to load', e.data.message);
+        ledgerElec.textContent = 'Model unavailable';
+      }
+    };
+    electronicsWorker.onerror = (err) => {
+      console.warn('[panopticon] electronics worker error', err);
+      ledgerElec.textContent = 'Model unavailable';
+    };
+  }catch(e){ console.warn('[panopticon] could not start electronics worker', e); }
+}
+
+/* Rule 3: grab one frame at a time and hand it to the worker; never runs on the main thread */
+async function scanForElectronics(){
+  if(sessionLocked || electronicsTerminated || !electronicsWorkerReady) return;
+  try{
+    const bitmap = await createImageBitmap(video, {resizeWidth: 320});
+    electronicsWorker.postMessage({type: 'frame', bitmap}, [bitmap]);
+  }catch(e){
+    setTimeout(scanForElectronics, 250); // frame not ready yet — retry shortly
+  }
+}
+
+/* Rule 2: ghost-writer tick — cross-reference input rate against camera stillness */
+function ghostwriterTick(){
+  if(sessionLocked) return;
+  const recentDeviation = gazeBuffer.filter(g => Date.now() - g.t <= 4000);
+  let isStillBody = false;
+  if(recentDeviation.length > 3){
+    const vals = recentDeviation.map(g => g.v);
+    const mean = vals.reduce((a,b)=>a+b,0) / vals.length;
+    const variance = vals.reduce((a,b)=>a+(b-mean)*(b-mean),0) / vals.length;
+    isStillBody = variance < 0.015; // near-zero motion = frozen/no-face camera feed, not just a calm focused head
+  }
+  const inputRate = getInputRate(4000);
+  const isActiveInput = inputRate >= 6;
+
+  if(isStillBody && isActiveInput){
+    violate('ghostwriter', {
+      warnMsg: "Suspicious input activity detected without matching body motion — a possible ghost-writer signature.",
+      warnTitleTxt: "SUSPICIOUS INPUT ACTIVITY",
+      termTitle: "SESSION LOCKED",
+      termMsg: "Sustained keyboard/mouse input was detected while the camera showed no matching motion three times. Your session has been terminated and locked.",
+      color1:'#9B5CFF', color2:'#3ee6b8'
+    });
+  }
+}
+
+function computeAudioDb(){
+  analyser.getByteTimeDomainData(dataArray);
+  let sumSquares = 0;
+  for(let i=0;i<dataArray.length;i++){
+    const norm = (dataArray[i]-128)/128;
+    sumSquares += norm*norm;
+  }
+  const rms = Math.sqrt(sumSquares/dataArray.length);
+  const db = 20*Math.log10(rms + 1e-6) + 90;
+  return Math.max(0, db);
+}
+
+function loop(){
+  if(sessionLocked) return;
+  const now = Date.now();
+  const dt = now - lastFrameTime;
+  lastFrameTime = now;
+
+  let mouthOpenness = lastMouthOpenness;
+  let direction = lastGazeDirection;
+
+  if(video.currentTime !== lastVideoTime){
+    lastVideoTime = video.currentTime;
+    const result = faceLandmarker.detectForVideo(video, now);
+
+    const faceCount = result.faceLandmarks ? result.faceLandmarks.length : 0;
+    currentFaceCount = faceCount;
+    faceCountVal.textContent = faceCount;
+
+    let deviation = 0;
+    let faceDetected = faceCount > 0;
+    let dx = 0, dy = 0;
+
+    if(faceDetected){
+      const lm = result.faceLandmarks[0];
+      const nose = lm[1] || lm[4];
+      const upperLip = lm[13];
+      const lowerLip = lm[14];
+      const eyeL = lm[33], eyeR = lm[263];
+      if(upperLip && lowerLip && eyeL && eyeR){
+        const eyeDist = Math.hypot(eyeL.x - eyeR.x, eyeL.y - eyeR.y) || 1;
+        mouthOpenness = Math.abs(upperLip.y - lowerLip.y) / eyeDist; // scale-invariant mouth-gap ratio
+        lastMouthOpenness = mouthOpenness;
+      }
+
+      if(!calibrated){
+        calibrationSamples.push({x:nose.x, y:nose.y});
+        if(now - calibrationStart > CALIBRATION_MS){
+          const avgX = calibrationSamples.reduce((a,b)=>a+b.x,0)/calibrationSamples.length;
+          const avgY = calibrationSamples.reduce((a,b)=>a+b.y,0)/calibrationSamples.length;
+          baselineX = avgX; baselineY = avgY;
+          calibrated = true;
+        }
+      } else {
+        dx = nose.x - baselineX;
+        dy = nose.y - baselineY;
+        deviation = Math.sqrt(dx*dx + dy*dy) * 100;
+      }
+    }
+
+    if(!faceDetected){ deviation = 100; }
+
+    faceCurrentlyDetected = faceDetected;
+    currentDeviation = deviation;
+    pushWithWindow(gazeBuffer, deviation, now);
+    gazeVal.textContent = faceDetected ? deviation.toFixed(2) : "No face detected";
+
+    // ---- Rule 1: classify gaze direction ----
+    if(!calibrated){
+      direction = 'center';
+    } else if(!faceDetected){
+      direction = 'away';
+    } else if(dy > DOWN_THRESH){
+      direction = 'down';
+    } else if(dy < UP_THRESH){
+      direction = 'up';
+    } else if(dx > SIDE_THRESH){
+      direction = 'right';
+    } else if(dx < -SIDE_THRESH){
+      direction = 'left';
+    } else {
+      direction = 'center';
+    }
+    gazeDirVal.textContent = direction;
+
+    if(direction === 'down'){
+      downGazeMs += dt;
+      if(downGazeMs >= DOWN_GRACE_MS && now - lastGazeViolationAt > GAZE_COOLDOWN_MS){
+        lastGazeViolationAt = now;
+        downGazeMs = 0;
+        violate('gaze', {
+          warnMsg: "Prolonged downward gaze detected — scratchpad time limit exceeded.",
+          warnTitleTxt: "SCRATCHPAD TIME LIMIT",
+          termTitle: "EXAM TERMINATED",
+          termMsg: "Repeated scratchpad time-limit violations detected. Your session has been ended.",
+          color1:'#F2B807', color2:'#e8ab4f'
+        });
+      }
+    } else {
+      downGazeMs = 0; // automatic gaze-reset condition
+    }
+
+    if((direction === 'left' || direction === 'right' || direction === 'up' || direction === 'away')
+        && direction !== lastGazeDirection && now - lastGazeViolationAt > GAZE_COOLDOWN_MS){
+      lastGazeViolationAt = now;
+      violate('gaze', {
+        warnMsg: direction === 'away'
+          ? "You looked away from the screen or left the camera view."
+          : `Off-screen gaze detected (looking ${direction}). Reference material outside the frame is not allowed.`,
+        warnTitleTxt: "OFF-SCREEN GAZE",
+        termTitle: "EXAM TERMINATED",
+        termMsg: "Repeated off-screen gaze violations detected. Your session has been ended.",
+        color1:'#ff4d5e', color2:'#e8ab4f'
+      });
+    }
+    lastGazeDirection = direction;
+
+    mouthBuffer.push({t: now, v: mouthOpenness});
+    while(mouthBuffer.length && now - mouthBuffer[0].t > MOUTH_WINDOW_MS) mouthBuffer.shift();
+
+    // ---- Multi-face (own ledger, edge-triggered) ----
+    if(currentFaceCount > 1){
+      if(!wasMultiFaceAlert){
+        wasMultiFaceAlert = true;
+        violate('multiFace', {
+          warnMsg: "Only one person is allowed in frame during the exam. Multiple faces were detected.",
+          warnTitleTxt: "MULTIPLE FACES DETECTED",
+          termTitle: "EXAM TERMINATED",
+          termMsg: "Multiple faces were detected in frame too many times. Your session has been ended.",
+          color1:'#ff4d5e', color2:'#e8ab4f'
+        });
+      }
+    } else {
+      wasMultiFaceAlert = false;
+    }
+  }
+
+  const audioDb = computeAudioDb();
+  pushWithWindow(audioBuffer, audioDb, now);
+  audioVal.textContent = audioDb.toFixed(1) + " dB";
+  waveBars.forEach((bar, i) => {
+    const jitter = Math.sin(now/120 + i*1.3) * 0.3 + 0.7;
+    const h = Math.min(18, Math.max(3, (audioDb-25) * 0.5 * jitter));
+    bar.style.height = h + "px";
+  });
+
+  // Feature 1 — lip-sync gated talking check: was the mouth open at ANY point in the
+  // last 400ms (bridges the natural open/close between syllables) AND was the mic loud
+  // over that same stretch? Mouth never open recently => mic is ignored completely,
+  // no matter how loud the background is.
+  const recentMouth = mouthBuffer.filter(m => now - m.t <= 400);
+  const mouthOpenRecently = recentMouth.some(m => m.v > MOUTH_OPEN_THRESH);
+  if(mouthOpenRecently){
+    const recentAudio = audioBuffer.filter(a => now - a.t <= 900);
+    let loudEnough = false;
+    if(recentAudio.length > 5){
+      const mean = recentAudio.reduce((a,b)=>a+b.v,0) / recentAudio.length;
+      loudEnough = mean > 50; // audible speech level, above ambient room noise
+    }
+    isTalking = loudEnough;
+  } else {
+    isTalking = false;
+  }
+  talkVal.textContent = (isTalking ? "Yes" : "No") + " (ratio " + mouthOpenness.toFixed(3) + " / thr " + MOUTH_OPEN_THRESH + ")";
+
+  if(isTalking){
+    if(talkTrueSince === null) talkTrueSince = now;
+    if(!wasTalkingAlert && now - talkTrueSince >= TALK_CONFIRM_MS){
+      wasTalkingAlert = true;
+      violate('talking', {
+        warnMsg: "plz don't talk",
+        warnTitleTxt: "TALKING DETECTED",
+        termTitle: "EXAM TERMINATED",
+        termMsg: "Repeated talking violations detected during the exam. Your session has been ended.",
+        color1:'#F2B807', color2:'#e8ab4f'
+      });
+    }
+  } else {
+    talkTrueSince = null;
+    wasTalkingAlert = false;
+  }
+
+  const devScore = Math.min(currentDeviation / 8, 1) * 0.6;
+  const audioScore = Math.min(Math.max(audioDb-40,0) / 30, 1) * 0.15;
+  const mouthMeter = isTalking ? 0.25 : 0;
+  let confidence = Math.min(1, devScore + audioScore + mouthMeter);
+  if(!faceCurrentlyDetected || currentFaceCount > 1) confidence = Math.max(confidence, 0.97);
+
+  const pct = Math.round(confidence*100);
+  confVal.textContent = pct + "%";
+  confBar.style.width = pct + "%";
+
+  // strike dots reflect the Rule-1 gaze ledger (kept visually, for continuity with the old UI)
+  dots.forEach((d,i) => d.classList.toggle('used', i < ledger.gaze.count));
+
+  if(!calibrated && faceCurrentlyDetected){
+    banner.className = "banner safe";
+    banner.textContent = "CALIBRATING… please stay still and face the camera";
+  } else if(currentFaceCount > 1){
+    banner.className = "banner alert";
+    banner.textContent = "⚠ MULTIPLE FACES DETECTED";
+  } else if(direction === 'away'){
+    banner.className = "banner alert";
+    banner.textContent = "⚠ NO FACE DETECTED";
+  } else if(isTalking){
+    banner.className = "banner alert";
+    banner.textContent = "⚠ DON'T TALK";
+  } else if(direction === 'down' && downGazeMs > 3000){
+    const nearStrike = downGazeMs >= DOWN_GRACE_MS * 0.75; // last 3s before the strike fires
+    banner.className = nearStrike ? "banner hazard" : "banner warnAmber";
+    banner.textContent = `⚠ LOOKING DOWN (${(downGazeMs/1000).toFixed(1)}s / 12s)`;
+  } else if(direction === 'left' || direction === 'right' || direction === 'up'){
+    banner.className = "banner alert";
+    banner.textContent = `⚠ OFF-SCREEN GAZE (${direction.toUpperCase()})`;
+  } else {
+    banner.className = "banner safe";
+    banner.textContent = `STATUS: SAFE (p=${confidence.toFixed(2)})`;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+startBtn.addEventListener('click', async () => {
+  const name = studentNameInput.value.trim();
+  if(!name){
+    studentNameInput.style.borderColor = 'var(--red)';
+    studentNameInput.placeholder = 'Please enter your name';
+    studentNameInput.focus();
+    return;
+  }
+  startBtn.textContent = "Starting…";
+  try{
+    await setup();
+    startOverlay.style.display = "none";
+    studentName = name;
+    sessionStartTime = Date.now();
+    studentTag.textContent = name;
+    studentTag.style.display = "block";
+    endSessionBtn.style.display = "block";
+  }catch(e){
+    startBtn.textContent = "Permission denied — click to retry";
+    console.error(e);
+  }
+});
+</script>
+</body>
+</html>
