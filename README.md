@@ -26,3 +26,7 @@ MediaPipe · TensorFlow.js (coco-ssd) · Web Audio API · jsPDF — pure HTML/CS
 ## Note
 
 This is a personal project showcasing browser-based AI, not certified proctoring software — detection logic runs client-side and is inspectable via DevTools.
+
+## Troubleshooting
+
+If the webcam does not start, check your browser's camera permissions, close other apps using the camera, and reload the demo.
