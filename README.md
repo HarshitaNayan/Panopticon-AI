@@ -16,6 +16,13 @@ An AI exam proctor that watches everything — gaze, lips, and your phone — en
 
 MediaPipe · TensorFlow.js (coco-ssd) · Web Audio API · jsPDF — pure HTML/CSS/JS, no framework, no build step.
 
+## Before You Start
+
+- Open the live demo and allow webcam access when prompted.
+- Use a well-lit space and keep your face visible to the camera.
+- Close other applications that are using your webcam.
+- Treat detection alerts as signals to review, not proof of cheating.
+
 ## Note
 
 This is a personal project showcasing browser-based AI, not certified proctoring software — detection logic runs client-side and is inspectable via DevTools.
